@@ -18,26 +18,29 @@ def get_api_key(filename):
 
 API_key = get_api_key("api_keys.txt")
 
-def get_data(num):
+def get_top_five_players():
     """
-    Arguement: int num
+    Arguments: None
 
-    Return: dict dic
+    Return: List of top 5 Marvel Rivals Players' UID
 
-    Returning hero name, play time, and matches for num number of heroes.
+    Sorting through Marvel Rivals' API, specifically the player leaderboard
+    to get the top 5 players' UID.
     """
-    hero_list_url = f"https://marvelrivalsapi.com/api/v1/heroes"
+    leaderboard = []
+    url = "https://marvelrivalsapi.com/api/v2/players/leaderboard"
     header = {"x-api-key": API_key}
-    r = requests.get(hero_list_url, headers = header)
-    try:
-        data = json.loads(r.text)[:num]
-    except:
-        print("Num is out of range")
-        data = json.loads(r.text)
+    r = requests.get(url, headers = header)
     
-    name_lst = []
-    for hero in data:
-        name_lst.append(hero["name"])
+    try:
+        temp = json.loads(r.text)
+    except:
+        print("JSON failed to load")
+
+    for i in range(5):
+        leaderboard.append(temp["players"][i]["uid"])
+
+    return leaderboard
 
 def set_up_database(name):
     """
@@ -54,5 +57,8 @@ def set_up_database(name):
 
     return (cur, conn)
 
-get_data(5)
-get_data(100)
+def main():
+    get_top_five_players()
+
+if __name__ == "__main__":
+    main()
