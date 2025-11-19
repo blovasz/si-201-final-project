@@ -18,14 +18,14 @@ def get_api_key(filename):
 
 API_key = get_api_key("api_keys.txt")
 
-def get_top_five_players():
+def get_top_ten_players():
     """
     Arguments: None
 
-    Return: List of top 5 Marvel Rivals Players' UID
+    Return: lst leaderboard[tup]
 
     Sorting through Marvel Rivals' API, specifically the player leaderboard
-    to get the top 5 players' UID.
+    to get the top 10 players' UID and icons.
     """
     leaderboard = []
     url = "https://marvelrivalsapi.com/api/v2/players/leaderboard"
@@ -37,10 +37,41 @@ def get_top_five_players():
     except:
         print("JSON failed to load")
 
-    for i in range(5):
-        leaderboard.append(temp["players"][i]["uid"])
+    for i in range(10):
+        leaderboard.append((temp["players"][i]["uid"], temp["players"][i]["icon"]["player_icon"]))
 
     return leaderboard
+
+def get_player_match_history(num):
+    """
+    Arguement: int num
+
+    Return dict characters_used
+
+    For num number of matches, finding the most used character
+    by the top 20 players in Marvel Rivals
+    """
+    characters_used = {}
+    leaderboard = get_top_ten_players()
+    header = {"x-api-key": API_key}
+
+    for user in leaderboard:
+        url = f"https://marvelrivalsapi.com/api/v1/player/{user[0]}/match-history"
+        r = requests.get(url, headers=header)
+        
+        try:
+            temp = json.loads(r.text)
+        except:
+            print("JSON failed to load")
+
+        characters_used[user[0]] = {}
+        for i in range(num):
+            try:
+                characters_used[user[0]][i+1] = temp["match_history"][i]["match_player"]["player_hero"]["hero_name"]
+            except:
+                characters_used[user[0]][i+1] = "None"
+                
+    return characters_used
 
 def set_up_database(name):
     """
@@ -58,7 +89,7 @@ def set_up_database(name):
     return (cur, conn)
 
 def main():
-    get_top_five_players()
+    get_player_match_history(20)
 
 if __name__ == "__main__":
     main()
