@@ -18,33 +18,34 @@ def get_api_key(filename):
 
 API_key = get_api_key("api_keys.txt")
 
-def get_top_ten_players():
+def get_top_players(page_num):
     """
-    Arguments: None
+    Arguments: page_num
 
     Return: lst leaderboard[tup]
 
     Sorting through Marvel Rivals' API, specifically the player leaderboard
-    to get the top 10 players' UID and icons.
+    to get 25 players from page number page_num.
     """
     leaderboard = []
-    url = "https://marvelrivalsapi.com/api/v2/players/leaderboard"
+    #25 items load per page, iterating through pages lets us get 25 players per page
+    url = f"https://marvelrivalsapi.com/api/v2/players/leaderboard?page={page_num}"
     header = {"x-api-key": API_key}
     r = requests.get(url, headers = header)
     
     try:
         temp = json.loads(r.text)
+
+        for i in range(25):
+            leaderboard.append((temp["players"][i]["uid"], temp["players"][i]["icon"]["player_icon"]))
     except:
         print("JSON failed to load")
 
-    for i in range(10):
-        leaderboard.append((temp["players"][i]["uid"], temp["players"][i]["icon"]["player_icon"]))
-
     return leaderboard
 
-def get_player_match_history(num):
+def get_player_match_history(num, page_num):
     """
-    Arguement: int num
+    Arguement: int num, int page_num
 
     Return dict characters_used
 
@@ -52,7 +53,7 @@ def get_player_match_history(num):
     by the top 20 players in Marvel Rivals
     """
     characters_used = {}
-    leaderboard = get_top_ten_players()
+    leaderboard = get_top_players(page_num)
     header = {"x-api-key": API_key}
 
     for user in leaderboard:
@@ -63,6 +64,7 @@ def get_player_match_history(num):
             temp = json.loads(r.text)
         except:
             print("JSON failed to load")
+            temp = {}
 
         characters_used[user[0]] = {}
         for i in range(num):
@@ -89,7 +91,7 @@ def set_up_database(name):
     return (cur, conn)
 
 def main():
-    get_player_match_history(20)
+    get_player_match_history(5, 1)
 
 if __name__ == "__main__":
     main()
