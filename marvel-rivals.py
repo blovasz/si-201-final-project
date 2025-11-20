@@ -175,6 +175,32 @@ def add_to_character_by_match(num, page_num, cur, conn):
     conn.commit()
     pass
 
+def add_to_characters(x, y, cur, conn):
+    """
+    Arguements: int x, int y, cur, conn
+
+    Return: None
+
+    Using x and y to limit how many characters we add at a time,
+    we are adding data from hero_list() to the characters table
+    """
+    lst = hero_list()
+    if y > len(lst):
+        data = lst[x:len(lst)+1]
+    else:
+        data = lst[x:y]
+
+    for hero in data:
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO characters (id, name) VALUES (?, ?)
+            """,
+            (hero[0], hero[1])
+        )
+
+    conn.commit()
+    pass
+
 def run_add_character_by_match(x, cur, conn):
     """
     Arguement: int x, cur, conn
@@ -183,7 +209,7 @@ def run_add_character_by_match(x, cur, conn):
     
     Run character_by_match x times
     """
-    for i in range(15):
+    for i in range(x):
         print(f"adding data to character_by_match...\nRAN {i} TIMES")
         add_to_character_by_match(5, i+1, cur, conn)
 
@@ -191,6 +217,8 @@ def main():
     cur, conn = set_up_database("marvel-rivals.db")
     set_up_tables(cur, conn)
     #run_add_character_by_match(15, cur, conn)
+    add_to_characters(0, 25, cur, conn)
+    add_to_characters(25, 50, cur, conn)
     conn.close()
 
 if __name__ == "__main__":
