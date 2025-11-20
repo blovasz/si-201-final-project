@@ -69,11 +69,35 @@ def get_player_match_history(num, page_num):
         characters_used[user[0]] = {}
         for i in range(num):
             try:
-                characters_used[user[0]][i+1] = temp["match_history"][i]["match_player"]["player_hero"]["hero_name"]
+                characters_used[user[0]][i+1] = temp["match_history"][i]["match_player"]["player_hero"]["hero_id"]
             except:
                 characters_used[user[0]][i+1] = "None"
 
     return characters_used
+
+def hero_list():
+    """
+    Arguement: None
+
+    Return: lst[tup(hero_id, hero_name)]
+
+    Getting a list of every hero in game with their hero name and id
+    """
+    hero_lst = []
+    url = "https://marvelrivalsapi.com/api/v1/heroes"
+    header = {"x-api-key": API_key}
+    r = requests.get(url, headers=header)
+
+    try:
+        temp = json.loads(r.text)
+    except:
+        print("JSON failed to load")
+        temp = {}
+
+    for hero in temp:
+        hero_lst.append((hero["id"], hero["name"]))
+
+    return hero_lst
 
 def set_up_database(name):
     """
@@ -128,6 +152,7 @@ def set_up_tables(cur, conn):
 def main():
     cur, conn = set_up_database("marvel-rivals.db")
     set_up_tables(cur, conn)
+    hero_list()
     conn.close()
 
 if __name__ == "__main__":
