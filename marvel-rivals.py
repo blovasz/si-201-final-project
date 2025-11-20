@@ -72,7 +72,7 @@ def get_player_match_history(num, page_num):
                 characters_used[user[0]][i+1] = temp["match_history"][i]["match_player"]["player_hero"]["hero_name"]
             except:
                 characters_used[user[0]][i+1] = "None"
-                
+
     return characters_used
 
 def set_up_database(name):
@@ -90,8 +90,45 @@ def set_up_database(name):
 
     return (cur, conn)
 
+def set_up_tables(cur, conn):
+    """
+    Arguement: cur, conn
+
+    Return: None
+
+    Create two tables:
+    character_by_match - uid, player, match1, match2, match3, match4, match5
+    characters - id, name
+    pfp - uid, image_url
+    """
+    #Creating character_by_match
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS character_by_match (uid INTEGER PRIMARY KEY,
+        player TEXT UNIQUE, match1 INT, match2 INT, match3 INT, match4 INT, match5 INT)
+        """
+    )
+
+    #Creating characters
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY, name TEXT UNIQUE)
+        """
+    )
+
+    #Creating pfp
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pfp (uid INTEGER PRIMARY KEY, image_url TEXT UNIQUE)
+        """
+    )
+
+    conn.commit()
+
 def main():
-    get_player_match_history(5, 1)
+    cur, conn = set_up_database("marvel-rivals.db")
+    set_up_tables(cur, conn)
+    conn.close()
 
 if __name__ == "__main__":
     main()
