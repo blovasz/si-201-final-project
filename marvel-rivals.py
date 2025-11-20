@@ -175,12 +175,22 @@ def add_to_character_by_match(num, page_num, cur, conn):
     conn.commit()
     pass
 
-def main():
-    cur, conn = set_up_database("marvel-rivals.db")
-    set_up_tables(cur, conn)
+def run_add_character_by_match(x, cur, conn):
+    """
+    Arguement: int x, cur, conn
+
+    Return: None
+    
+    Run character_by_match x times
+    """
     for i in range(15):
         print(f"adding data to character_by_match...\nRAN {i} TIMES")
         add_to_character_by_match(5, i+1, cur, conn)
+
+def main():
+    cur, conn = set_up_database("marvel-rivals.db")
+    set_up_tables(cur, conn)
+    #run_add_character_by_match(15, cur, conn)
     conn.close()
 
 if __name__ == "__main__":
