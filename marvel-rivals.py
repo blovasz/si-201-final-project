@@ -37,7 +37,8 @@ def get_top_players(page_num):
         temp = json.loads(r.text)
 
         for i in range(25):
-            leaderboard.append((temp["players"][i]["uid"], temp["players"][i]["icon"]["player_icon"]))
+            leaderboard.append((temp["players"][i]["uid"], temp["players"][i]["name"],
+                                temp["players"][i]["icon"]["player_icon"]))
     except:
         print("JSON failed to load")
 
@@ -57,7 +58,7 @@ def get_player_match_history(num, page_num):
     header = {"x-api-key": API_key}
 
     for user in leaderboard:
-        url = f"https://marvelrivalsapi.com/api/v1/player/{user[0]}/match-history"
+        url = f"https://marvelrivalsapi.com/api/v2/player/{user[0]}/match-history"
         r = requests.get(url, headers=header)
         
         try:
@@ -66,7 +67,7 @@ def get_player_match_history(num, page_num):
             print("JSON failed to load")
             temp = {}
 
-        characters_used[user[0]] = {}
+        characters_used[user[0]] = {"name": user[1]}
         for i in range(num):
             try:
                 characters_used[user[0]][i+1] = temp["match_history"][i]["match_player"]["player_hero"]["hero_id"]
@@ -149,10 +150,37 @@ def set_up_tables(cur, conn):
 
     conn.commit()
 
+def add_to_character_by_match(num, page_num, cur, conn):
+    """
+    Arguements: int num, int page_num, cur, conn
+
+    Return: None
+
+    Calling get_player_match_history() and adding that data to character_by_match
+    if its not a duplicate.
+    """
+    data = get_player_match_history(num, page_num)
+
+    for player in list(data.keys()):
+        if data[player][1] != "None" and data[player][2] != "None" and data[player][3] != "None" and data[player][4] != "None" and data[player][5] != "None":
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO character_by_match (uid, player, match1, match2, match3, match4, match5)
+                VALUES (?,?,?,?,?,?,?)
+                """,
+                (player, data[player]["name"], data[player][1], data[player][2], data[player][3],
+                data[player][4], data[player][5])
+            )
+
+    conn.commit()
+    pass
+
 def main():
     cur, conn = set_up_database("marvel-rivals.db")
     set_up_tables(cur, conn)
-    hero_list()
+    for i in range(15):
+        print(f"adding data to character_by_match...\nRAN {i} TIMES")
+        add_to_character_by_match(5, i+1, cur, conn)
     conn.close()
 
 if __name__ == "__main__":
