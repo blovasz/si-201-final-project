@@ -41,6 +41,7 @@ def get_top_players(page_num):
             leaderboard.append((temp["players"][i]["uid"], temp["players"][i]["name"]))
     except:
         print("JSON failed to load")
+        return r.status_code
 
     return leaderboard
 
@@ -151,6 +152,9 @@ def add_to_character_by_match(num, page_num, cur, conn):
     """
     data = get_player_match_history(num, page_num)
 
+    if type(data) != dict:
+        return data
+
     for player in list(data.keys()):
         #I'm only adding the player if their match data is available. 
         if data[player][1] != "None" and data[player][2] != "None" and data[player][3] != "None" and data[player][4] != "None" and data[player][5] != "None":
@@ -211,7 +215,11 @@ def run_add_character_by_match(x, cur, conn):
     i = 1
 
     while count < x:
-        add_to_character_by_match(5, i, cur, conn)
+        c = add_to_character_by_match(5, i, cur, conn)
+        if c != None:
+            print(c)
+            break 
+        
         i += 1
 
         cur.execute(
@@ -224,7 +232,7 @@ def run_add_character_by_match(x, cur, conn):
     pass
 
 def main():
-    cur, conn = set_up_database("marvel-rivals.db")
+    cur, conn = set_up_database("marvel_rivals.db")
     set_up_tables(cur, conn)
     run_add_character_by_match(100, cur, conn) 
     add_to_characters(0, 25, cur, conn)
