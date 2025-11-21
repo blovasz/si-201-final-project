@@ -32,13 +32,13 @@ def get_top_players(page_num):
     url = f"https://marvelrivalsapi.com/api/v2/players/leaderboard?page={page_num}"
     header = {"x-api-key": API_key}
     r = requests.get(url, headers = header)
+
     
     try:
         temp = json.loads(r.text)
 
         for i in range(25):
-            leaderboard.append((temp["players"][i]["uid"], temp["players"][i]["name"],
-                                temp["players"][i]["icon"]["player_icon"]))
+            leaderboard.append((temp["players"][i]["uid"], temp["players"][i]["name"]))
     except:
         print("JSON failed to load")
 
@@ -91,12 +91,10 @@ def hero_list():
 
     try:
         temp = json.loads(r.text)
+        for hero in temp:
+            hero_lst.append((hero["id"], hero["name"]))
     except:
         print("JSON failed to load")
-        temp = {}
-
-    for hero in temp:
-        hero_lst.append((hero["id"], hero["name"]))
 
     return hero_lst
 
@@ -124,7 +122,6 @@ def set_up_tables(cur, conn):
     Create two tables:
     character_by_match - uid, player, match1, match2, match3, match4, match5
     characters - id, name
-    pfp - uid, image_url
     """
     #Creating character_by_match
     cur.execute(
@@ -138,13 +135,6 @@ def set_up_tables(cur, conn):
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY, name TEXT UNIQUE)
-        """
-    )
-
-    #Creating pfp
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS pfp (uid INTEGER PRIMARY KEY, image_url TEXT UNIQUE)
         """
     )
 
@@ -162,6 +152,7 @@ def add_to_character_by_match(num, page_num, cur, conn):
     data = get_player_match_history(num, page_num)
 
     for player in list(data.keys()):
+        #I'm only adding the player if their match data is available 
         if data[player][1] != "None" and data[player][2] != "None" and data[player][3] != "None" and data[player][4] != "None" and data[player][5] != "None":
             cur.execute(
                 """
@@ -207,16 +198,35 @@ def run_add_character_by_match(x, cur, conn):
 
     Return: None
     
-    Run character_by_match x times
+    Run character_by_match until num of rows is equal to x
     """
-    for i in range(x):
-        print(f"adding data to character_by_match...\nRAN {i} TIMES")
-        add_to_character_by_match(5, i+1, cur, conn)
+
+    cur.execute(
+        """
+        SELECT uid FROM character_by_match
+        """
+    )
+
+    count = len(cur.fetchall())
+    i = 1
+
+    while count < x:
+        add_to_character_by_match(5, i, cur, conn)
+        i += 1
+
+        cur.execute(
+        """
+        SELECT uid FROM character_by_match
+        """
+        )
+        count = len(cur.fetchall())
+
+    pass
 
 def main():
     cur, conn = set_up_database("marvel-rivals.db")
     set_up_tables(cur, conn)
-    #run_add_character_by_match(15, cur, conn)
+    run_add_character_by_match(100, cur, conn) 
     add_to_characters(0, 25, cur, conn)
     add_to_characters(25, 50, cur, conn)
     conn.close()
