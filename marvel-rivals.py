@@ -152,7 +152,7 @@ def add_to_character_by_match(num, page_num, cur, conn):
     data = get_player_match_history(num, page_num)
 
     for player in list(data.keys()):
-        #I'm only adding the player if their match data is available 
+        #I'm only adding the player if their match data is available. 
         if data[player][1] != "None" and data[player][2] != "None" and data[player][3] != "None" and data[player][4] != "None" and data[player][5] != "None":
             cur.execute(
                 """
