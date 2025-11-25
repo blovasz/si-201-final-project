@@ -1,4 +1,5 @@
 import marvel_rivals
+
 def most_played_characters(file, filename):
     """
     Arguements: str file, str filename
