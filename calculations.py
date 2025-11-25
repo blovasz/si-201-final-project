@@ -46,13 +46,13 @@ def most_played_characters(file, filename):
     except:
         #Only writing if the file doesn't already exist
         with open(filename, "w") as f:
-            f.write(f"{results[0][0]} is used {results[0][1]} times")
+            f.write(f"{results[0][0]}, {results[0][1]} times")
             for i in range(1, len(results)):
                 f.write(f"\n{results[i][0]} is used {results[i][1]} times")
     pass
 
 def main():
-    most_played_characters("marvel_rivals.db", "most_played_characters.txt")
+    most_played_characters("marvel_rivals.db", "most_played_characters.csv")
 
 if __name__ == "__main__":
     main()
