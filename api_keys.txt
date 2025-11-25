@@ -1,3 +1,3 @@
 comic_vine = replace text with key
-superheroes = replace text with key
-marvel_rivals = replace text with key
+superheroes = f3ac81d7c84b208ad599dbb73eaef06d
+marvel_rivals = fea1a5a54b4f1777b70a1cab27b973bbe038d042
