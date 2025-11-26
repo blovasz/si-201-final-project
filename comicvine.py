@@ -42,11 +42,18 @@ def set_up_tables(cur, conn):
     Create two tables:
     
     """
-    #Creating representation
+    #Creating origins
     cur.execute(
         """
-        CREATE TABLE IF NOT EXISTS representation (id INTEGER PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS origins (id INTEGER PRIMARY KEY,
         origin TEXT UNIQUE)
+        """
+    )
+
+    #Creating genders
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS genders (id INTEGER PRIMARY KEY, gender TEXT UNIQUE)
         """
     )
 
@@ -54,7 +61,7 @@ def set_up_tables(cur, conn):
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY, name TEXT UNIQUE, 
-        numcomics INT, origin_id INT)
+        numcomics INT, origin_id INT, gender_id INT)
         """
     )
 
@@ -74,7 +81,7 @@ def get_data():
     offset = 0
 
     while len(results) < 100:
-        url = f"https://comicvine.gamespot.com/api/characters/?api_key={API_KEY}&format=json&field_list=count_of_issue_appearances,name,origin,publisher,movies&offset={offset}"
+        url = f"https://comicvine.gamespot.com/api/characters/?api_key={API_KEY}&format=json&field_list=count_of_issue_appearances,name,origin,publisher,gender&offset={offset}"
         r = requests.get(url, headers={"User-Agent": "MyApp"})
         try:
             data = json.loads(r.text)
@@ -90,8 +97,9 @@ def get_data():
                 except:
                     origin = "None"
                 numcomics = hero.get("count_of_issue_appearances", 0)
+                gender = hero.get("gender", "Other")
                 results.append((
-                    name, origin, numcomics
+                    name, origin, numcomics, gender
                 ))
         
         offset += 100
@@ -111,10 +119,49 @@ def insert_data_for_origins(cur, conn, data):
         for i in range(x,y):
             cur.execute(
                 """
-                INSERT OR IGNORE INTO representation (id, origin)
+                INSERT OR IGNORE INTO origins (id, origin)
                 VALUES (?, ?)
                 """,
                 (i, data[i][1])
+            )
+            conn.commit()
+
+        x += 25
+        y += 25
+    pass
+
+def insert_data_for_gender(cur, conn, data):
+    """
+    Arugments: cur, conn, data
+
+    Returns: None
+    """
+    x = 0
+    y = 25
+    
+
+    while y < len(data):
+        for i in range(x,y):
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO genders (id, gender)
+                VALUES (?, ?)
+                """,
+                (1, "Male")
+            )
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO genders (id, gender)
+                VALUES (?, ?)
+                """,
+                (2, "Female")
+            )
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO genders (id, gender)
+                VALUES (?, ?)
+                """,
+                (0, "Other")
             )
             conn.commit()
 
@@ -130,7 +177,7 @@ def insert_data_for_characters(cur, conn, data):
         for i in range(x,y):
             cur.execute(
                 f"""
-                SELECT id FROM representation
+                SELECT id FROM origins
                 WHERE origin = '{data[i][1]}'
                 """
             )
@@ -140,9 +187,9 @@ def insert_data_for_characters(cur, conn, data):
             #characters
             cur.execute(
                 """
-                INSERT OR IGNORE INTO characters (id, name, numcomics, origin_id) VALUES (?,?,?,?)
+                INSERT OR IGNORE INTO characters (id, name, numcomics, origin_id, gender_id) VALUES (?,?,?,?,?)
                 """,
-                (i, data[i][0], data[i][2], o)
+                (i, data[i][0], data[i][2], o, data[i][3])
             )
 
             conn.commit()
@@ -155,6 +202,7 @@ def main():
     set_up_tables(cur, conn)
     data = get_data()
     insert_data_for_origins(cur, conn, data)
+    insert_data_for_gender(cur,conn,data)
     insert_data_for_characters(cur,conn,data)
     conn.close()
 
