@@ -181,15 +181,14 @@ def setup_tables(conn, cur):
     )
     conn.commit()
 
+unique_names = {}
+
 def add_rows_to_db_tables(conn, cur, batch):
-    unique_names = {}
     for idx, row in enumerate(batch):
         unique_id, name, gender, origin, height, weight = row
-
         if name not in unique_names.values():
             name_id = len(unique_names) + 1
             unique_names[name_id] = name
-
             cur.execute(
                 "INSERT OR IGNORE INTO names (name_id, name) VALUES (?, ?)",
                 (name_id, name)
@@ -203,7 +202,7 @@ def add_rows_to_db_tables(conn, cur, batch):
         else:
             name_id = [k for k, v in unique_names.items() if v == name][0]
             cur.execute(
-                """INSERT OR IGNORE INTO superhero_appearance
+                """INSERT OR IGNORE INTO superheros
                    (id, name_id, gender_id, place_of_birth_id, height, weight)
                    VALUES (?, ?, ?, ?, ?, ?)""",
                 (unique_id, name_id, gender, origin, height, weight)
