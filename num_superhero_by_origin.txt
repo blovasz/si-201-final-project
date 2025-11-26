@@ -1,0 +1,7 @@
+There are 27 superheros from North America
+There are 10 superheros from Europe
+There are 2 superheros from Africa
+There are 1 superheros from Asia
+There are 3 superheros from Somewhere in Earth
+There are 12 superheros from Fictional Place
+There are 45 superheros from Unknown

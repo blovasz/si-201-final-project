@@ -1,4 +1,5 @@
 import marvel_rivals
+import superhero
 
 def most_played_characters(file, filename):
     """
@@ -51,8 +52,34 @@ def most_played_characters(file, filename):
                 f.write(f"\n{results[i][0]} is used {results[i][1]} times")
     pass
 
+def number_of_superheros_by_geographical_origin(db_file, filename):
+    conn, cur = superhero.setup_db(db_file)
+    cur.execute("""
+        SELECT places_of_birth.place_of_birth
+        FROM superheros
+        JOIN places_of_birth
+        ON superheros.place_of_birth_id = places_of_birth.place_of_birth_id
+    """)
+    places_of_birth = cur.fetchall()
+    places_count = {
+        "North America": 0,
+        "Europe": 0,
+        "Africa": 0,
+        "Asia": 0,
+        "Somewhere in Earth": 0,
+        "Fictional Place": 0,
+        "Unknown": 0
+    }
+    for place in places_of_birth:
+        if place[0] in places_count:
+            places_count[place[0]] += 1
+    with open(filename, "w") as f:
+        for origin, count in places_count.items():
+            f.write(f"There are {count} superheros from {origin}\n")
+
 def main():
     most_played_characters("marvel_rivals.db", "most_played_characters.txt")
+    number_of_superheros_by_geographical_origin("superhero.db", "num_superhero_by_origin.txt")
 
 if __name__ == "__main__":
     main()
