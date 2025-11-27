@@ -16,7 +16,21 @@ def get_api_key(filename):
 
     return key
 
+def get_hero_key(filename):
+    """
+    Arguement: str filename
+
+    Return: str key
+
+    Taking a file of api_keys and getting back the Superhero API key 
+    """
+    with open(filename) as file:
+        key = file.readlines()[1].split("=")[1].strip(" ")
+
+    return key
+
 API_key = get_api_key("api_keys.txt")
+API_KEY = get_hero_key("api_keys.txt").strip()
 
 def get_top_players(page_num):
     """
@@ -40,7 +54,7 @@ def get_top_players(page_num):
         for i in range(25):
             leaderboard.append((temp["players"][i]["uid"], temp["players"][i]["name"]))
     except:
-        print("JSON failed to load")
+        print("JSON failed to load at top_players")
         return r.status_code
 
     return leaderboard
@@ -65,7 +79,8 @@ def get_player_match_history(num, page_num):
         try:
             temp = json.loads(r.text)
         except:
-            print("JSON failed to load")
+            print("JSON failed to load at player_match_history")
+            print(r.status_code)
             temp = {}
 
         characters_used[user[0]] = {"name": user[1]}
@@ -89,13 +104,30 @@ def hero_list():
     url = "https://marvelrivalsapi.com/api/v1/heroes"
     header = {"x-api-key": API_key}
     r = requests.get(url, headers=header)
+    base = f"https://superheroapi.com/api/{API_KEY}/search/"
 
     try:
         temp = json.loads(r.text)
-        for hero in temp:
-            hero_lst.append((hero["id"], hero["name"]))
     except:
-        print("JSON failed to load")
+        print(r.status_code)
+        print("JSON failed to load at hero_list 1")
+
+    for hero in temp:
+        ourl = base + hero["name"]
+        try:
+            req = requests.get(ourl)
+            gdata = json.loads(req.text)
+        except:
+            print("JSON faild to load at hero_list 2")
+        
+        try:
+            gender = gdata["results"][0]["appearance"]["gender"]
+        except:
+            gender = "Other"
+            
+        tup = (hero["id"], hero["name"], gender)
+        print(tup)
+        hero_lst.append(tup)
 
     return hero_lst
 
@@ -135,8 +167,42 @@ def set_up_tables(cur, conn):
     #Creating characters
     cur.execute(
         """
-        CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY, name TEXT UNIQUE)
+        CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY, name TEXT UNIQUE, gender INT)
         """
+    )
+
+    #Creating gender
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS gender (id INTEGER PRIMARY KEY, gender TEXT UNIQUE)
+        """
+    )
+
+    conn.commit()
+
+    cur.execute(
+        """
+        INSERT OR IGNORE INTO gender (id, gender) VALUES (?,?)
+        """,
+        (0, "Other")
+    )
+
+    conn.commit()
+
+    cur.execute(
+        """
+        INSERT OR IGNORE INTO gender (id, gender) VALUES (?,?)
+        """,
+        (1, "Male")
+    )
+
+    conn.commit()
+
+    cur.execute(
+        """
+        INSERT OR IGNORE INTO gender (id, gender) VALUES (?,?)
+        """,
+        (2, "Female")
     )
 
     conn.commit()
@@ -186,12 +252,27 @@ def add_to_characters(x, y, cur, conn):
         data = lst[x:y]
 
     for hero in data:
-        cur.execute(
-            """
-            INSERT OR IGNORE INTO characters (id, name) VALUES (?, ?)
-            """,
-            (hero[0], hero[1])
-        )
+        if hero[2] == "Male":
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO characters (id, name, gender) VALUES (?, ?, ?)
+                """,
+                (hero[0], hero[1], 1)
+            )
+        elif hero[2] == "Female":
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO characters (id, name, gender) VALUES (?, ?, ?)
+                """,
+                (hero[0], hero[1], 2)
+            )
+        else:
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO characters (id, name, gender) VALUES (?, ?, ?)
+                """,
+                (hero[0], hero[1], 0)
+            )
 
     conn.commit()
     pass
