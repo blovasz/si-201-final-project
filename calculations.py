@@ -47,7 +47,7 @@ def most_played_characters(file, filename):
     except:
         #Only writing if the file doesn't already exist
         with open(filename, "w") as f:
-            f.write(f"{results[0][0]} is used {results[0][1]} times")
+            f.write(f"{results[0][0]}, {results[0][1]} times")
             for i in range(1, len(results)):
                 f.write(f"\n{results[i][0]} is used {results[i][1]} times")
     pass
@@ -110,8 +110,12 @@ def superhero_api_calculations(db_file, filename, filename2):
                 f.write(f"No data for {gender} superheros\n")
 
 def main():
+<<<<<<< HEAD
     most_played_characters("marvel_rivals.db", "most_played_characters.txt")
     superhero_api_calculations("superhero.db", "num_superhero_by_origin.txt", "average_bmi_by_gender.txt")
+=======
+    most_played_characters("marvel_rivals.db", "most_played_characters.csv")
+>>>>>>> bl-calc
 
 if __name__ == "__main__":
     main()
