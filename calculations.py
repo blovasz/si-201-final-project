@@ -110,12 +110,8 @@ def superhero_api_calculations(db_file, filename, filename2):
                 f.write(f"No data for {gender} superheros\n")
 
 def main():
-<<<<<<< HEAD
     most_played_characters("marvel_rivals.db", "most_played_characters.txt")
     superhero_api_calculations("superhero.db", "num_superhero_by_origin.txt", "average_bmi_by_gender.txt")
-=======
-    most_played_characters("marvel_rivals.db", "most_played_characters.csv")
->>>>>>> bl-calc
 
 if __name__ == "__main__":
     main()
