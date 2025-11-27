@@ -10,12 +10,12 @@ def most_played_characters(file, filename):
     Iterating through the characters used and ordering them
     through most played in a text file for later use
     """
-    results = []
+    results = {"Male": 0, "Female": 0, "Other": 0}
     cur, conn = marvel_rivals.set_up_database(file)
 
     cur.execute(
         """
-        SELECT name, id FROM characters
+        SELECT name, id, gender FROM characters
         """
     )
 
@@ -39,17 +39,28 @@ def most_played_characters(file, filename):
             num = len(cur.fetchall())
             count += num
 
-        results.append((name, count))
-        results = sorted(results, key = lambda x: x[1], reverse=True)
+        cur.execute(
+            f"""
+            SELECT gender.gender FROM gender
+            WHERE gender.id = {hero[2]}
+            """
+        )
+
+        gender = cur.fetchone()[0]
+
+        results[gender] += count
+        
     
     try:
         open(filename)
     except:
         #Only writing if the file doesn't already exist
         with open(filename, "w") as f:
-            f.write(f"{results[0][0]}, {results[0][1]} times")
-            for i in range(1, len(results)):
-                f.write(f"\n{results[i][0]} is used {results[i][1]} times")
+            f.write(f"gender, number of times played")
+            for key in list(results.keys()):
+                f.write(f"\n{key},{results[key]}")
+
+    conn.close()
     pass
 
 def superhero_api_calculations(db_file, filename, filename2):
@@ -77,9 +88,12 @@ def superhero_api_calculations(db_file, filename, filename2):
     for place in places_of_birth:
         if place[0] in places_count:
             places_count[place[0]] += 1
-    with open(filename, "w") as f:
-        for origin, count in places_count.items():
-            f.write(f"There are {count} superheros from {origin}\n")
+    try:
+        open(filename)
+    except:
+        with open(filename, "w") as f:
+            for origin, count in places_count.items():
+                f.write(f"There are {count} superheros from {origin}\n")
 
     cur.execute("""
         SELECT genders.gender, superheros.height, superheros.weight
@@ -101,16 +115,19 @@ def superhero_api_calculations(db_file, filename, filename2):
             except Exception:
                 continue
 
-    with open(filename2, "a") as f:   # append so both results are in same file
-        for gender, total_bmi in gender_bmi.items():
-            if gender_counts[gender] > 0:
-                avg_bmi = total_bmi / gender_counts[gender]
-                f.write(f"The average BMI for {gender} superheros is {avg_bmi:.2f}\n")
-            else:
-                f.write(f"No data for {gender} superheros\n")
+    try:
+        open(filename2)
+    except:
+        with open(filename2, "a") as f:   # append so both results are in same file
+            for gender, total_bmi in gender_bmi.items():
+                if gender_counts[gender] > 0:
+                    avg_bmi = total_bmi / gender_counts[gender]
+                    f.write(f"The average BMI for {gender} superheros is {avg_bmi:.2f}\n")
+                else:
+                    f.write(f"No data for {gender} superheros\n")
 
 def main():
-    most_played_characters("marvel_rivals.db", "most_played_characters.txt")
+    most_played_characters("marvel_rivals.db", "most_played_characters.csv")
     superhero_api_calculations("superhero.db", "num_superhero_by_origin.txt", "average_bmi_by_gender.txt")
 
 if __name__ == "__main__":
