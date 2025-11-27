@@ -1,5 +1,6 @@
 import marvel_rivals
 import superhero
+import comicvine
 
 def most_played_characters(file, filename):
     """
@@ -56,7 +57,7 @@ def most_played_characters(file, filename):
     except:
         #Only writing if the file doesn't already exist
         with open(filename, "w") as f:
-            f.write(f"gender, number of times played")
+            f.write("gender, number of times played")
             for key in list(results.keys()):
                 f.write(f"\n{key},{results[key]}")
 
@@ -125,10 +126,45 @@ def superhero_api_calculations(db_file, filename, filename2):
                     f.write(f"The average BMI for {gender} superheros is {avg_bmi:.2f}\n")
                 else:
                     f.write(f"No data for {gender} superheros\n")
+                
+def gender_by_comics(db, filename):
+    """
+    Aruements: db, filename
+
+    Returns: None
+
+    Going through the superhero.db to grab how many issues different genders feature in
+    """
+    cur, conn = comicvine.set_up_database(db)
+    results = {"Male": 0, "Female": 0, "Other": 0}
+
+    cur.execute(
+        """
+        SELECT characters.numcomics, genders.gender FROM characters
+        JOIN genders ON genders.id = characters.gender_id
+        """
+    )
+
+    heroes = cur.fetchall()
+
+    for hero in heroes:
+        results[hero[1]] += hero[0]
+
+    try:
+        open(filename)
+    except:
+        with open(filename, "w") as f:
+            f.write("gender, number of issues")
+            for key in list(results.keys()):
+                f.write(f"\n{key},{results[key]}")
+
+    conn.close()
+    pass
 
 def main():
     most_played_characters("marvel_rivals.db", "most_played_characters.csv")
     superhero_api_calculations("superhero.db", "num_superhero_by_origin.txt", "average_bmi_by_gender.txt")
+    gender_by_comics("comicvine.db", "gender_by_comics.csv")
 
 if __name__ == "__main__":
     main()
