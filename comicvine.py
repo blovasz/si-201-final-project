@@ -170,6 +170,11 @@ def insert_data_for_gender(cur, conn, data):
     pass
 
 def insert_data_for_characters(cur, conn, data):
+     """
+     Arguments: cur, conn, data
+
+     Returns: NONE
+     """
      x = 0
      y = 25
 
@@ -196,6 +201,7 @@ def insert_data_for_characters(cur, conn, data):
 
         x += 25
         y += 25
+     pass
 
 def main():
     cur, conn = set_up_database("comicvine.db")
