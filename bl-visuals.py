@@ -1,54 +1,40 @@
 import matplotlib
 import matplotlib.pyplot as plt
 
-def make_fig(filenames, title, subname1, subname2, colors):
+def make_fig(filename, title, y, colors):
     """
-    Arguments: filenames, title subname1, subname2, colors
+    Arguments: str filename, str title, str y, lst colors
 
-    Returns: None
+    Returns: NONE
 
-    Creating a figure of two barcharts, names of files from list (filenames) to get data,
-    title will be the title of the figure, subname1 and subname2 are for chart names,
-    colors will be a list of the colors used to distinguish (Male, Female, Other) on both graphs
+    Creates a figure using data from filename titled title with an
+    x axis of gender and a y axis of y, with colors for the color of each bar.
     """
     labels = ["Male", "Female", "Other"]
-    comic_data = []
-    with open(filenames[0]) as file:
-        lines = file.readlines()
-        for line in range(1,4): #skipping headers
-            data = int(lines[line].split(",")[-1])
-            comic_data.append(data)
+    data = []
 
-    game_data = []
-    with open(filenames[1]) as file:
-        lines = file.readlines()
-        for line in range(1,4):
-            data = int(lines[line].split(",")[-1])
-            game_data.append(data)
-    
-    fig, (ax1, ax2) = plt.subplots(1,2, figsize = (20,10))
-
-    fig.suptitle(title, y = .97, size = 30)
-    ax1.set_title(subname1, size = 18, pad = 10)
-    container = ax1.bar(labels,comic_data,color=colors)
-    ax1.bar_label(container)
-    ax1.set_xlabel("Gender", size = 14, labelpad = 10)
-    ax1.set_ylabel("Number of Issues", size = 14, labelpad = 10)
-    ax2.set_title(subname2, size = 18, pad = 10)
-    container = ax2.bar(labels,game_data,color=colors)
-    ax2.bar_label(container)
-    ax2.set_xlabel("Gender", size = 14, labelpad = 10)
-    ax2.set_ylabel("Number of Matches Played In", size = 14, labelpad = 10)
-
-    fig.savefig(f"{title}.png")
-
+    with open(filename) as f:
+        lines = f.readlines()
+        for i in range(1, len(lines)):
+            data.append(int(lines[i].split(",")[-1].strip()))
+                 
+    plt.figure(figsize=(20,10)) 
+    container = plt.bar(labels, data, color = colors)
+    plt.bar_label(container)
+    plt.title(title, size = 24)
+    plt.xlabel("Gender", size = 14, labelpad = 10)
+    plt.ylabel(y, size = 14, labelpad = 10)
     plt.show()
 
+    png_name = title.replace(" ", "_")
+    plt.savefig(f"{png_name}.png")
+
+
 def main():
-    data = ["gender_by_comics.csv", "most_played_characters.csv"]
-    title = "Heroes by Gender in Marvel Comics and Marvel Rivals"
     colors = ["cornflowerblue", "hotpink", "orange"]
-    make_fig(data, title, "Heroes by Gender in Marvel Comics", "Heroes by Gender in Marvel Rival Matches", colors)
+    make_fig("gender_by_comics.csv", "Heroes by Gender in Marvel Comics", "Number of Issues", colors)
+    make_fig("most_played_characters.csv", "Heroes by Gender in Marvel Rival Matches", 
+             "Number of Matches Played In", colors)
 
 
 if __name__ == "__main__":
