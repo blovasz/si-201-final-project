@@ -24,10 +24,10 @@ def make_fig(filename, title, y, colors):
     plt.title(title, size = 24)
     plt.xlabel("Gender", size = 14, labelpad = 10)
     plt.ylabel(y, size = 14, labelpad = 10)
-    plt.show()
 
     png_name = title.replace(" ", "_")
     plt.savefig(f"{png_name}.png")
+    plt.show()
 
 
 def main():
