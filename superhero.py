@@ -8,14 +8,16 @@ def get_api_key(file_name, api_key_loc):
     """ 
     Arg: str file_name, int api_key_loc
     Out: str api key from file_name
+    Gets the API key from api_keys.txt
     """
     with open(file_name) as file:
         return file.readlines()[api_key_loc].split("=")[1].strip()
 
 def get_superhero_row(id):
     """
-    Arg: int id, str var1, str var2
-    Out: tup of superhero id, var1, var2
+    Arg: int id
+    Out: tup of superhero id
+    Gets the superhero data row of a specific superhero ID
     """
     try:
         data = json.loads(requests.get(f"https://www.superheroapi.com/api.php/{get_api_key("api_keys.txt", 1)}/{id}").text)
@@ -25,8 +27,9 @@ def get_superhero_row(id):
     
 def get_superhero_rows(start_id, end_id):
     """
-    Arg: int start_id, int end_id, str var1, str var2
-    Out: lst of tup of superhero id, var1, var2
+    Arg: int start_id, int end_id
+    Out: lst of tup of superhero id
+    Gets all the superhero row data from a specified start and end ID range
     """
     out_lst = []
     counter = 0
@@ -70,6 +73,7 @@ def setup_db(db_name):
     """
     Arg: str db_name
     Out: conn, cur
+    Sets up the database
     """
     conn = sqlite3.connect(os.path.dirname(os.path.abspath(__file__)) + "/" + db_name)
     return (conn, conn.cursor())
@@ -78,6 +82,7 @@ def setup_tables(conn, cur):
     """
     Arg: conn, cur
     Out: none
+    Sets up the tables in the database
     """
     cur.execute(
         """
@@ -184,6 +189,11 @@ def setup_tables(conn, cur):
 unique_names = {}
 
 def add_rows_to_db_tables(conn, cur, batch):
+    """
+    Arg: conn, cur, int batch
+    Out: none
+    Adds the rows in batches of 25 to the database tables
+    """
     for idx, row in enumerate(batch):
         unique_id, name, gender, origin, height, weight = row
         if name not in unique_names.values():
@@ -195,25 +205,36 @@ def add_rows_to_db_tables(conn, cur, batch):
             )
             cur.execute(
                 """INSERT OR IGNORE INTO superheros
-                   (id, name_id, gender_id, place_of_birth_id, height, weight)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (id, name_id, gender_id, place_of_birth_id, height, weight)
+                VALUES (?, ?, ?, ?, ?, ?)""",
                 (unique_id, name_id, gender, origin, height, weight)
             )
         else:
             name_id = [k for k, v in unique_names.items() if v == name][0]
             cur.execute(
                 """INSERT OR IGNORE INTO superheros
-                   (id, name_id, gender_id, place_of_birth_id, height, weight)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (id, name_id, gender_id, place_of_birth_id, height, weight)
+                VALUES (?, ?, ?, ?, ?, ?)""",
                 (unique_id, name_id, gender, origin, height, weight)
             )
     conn.commit()
 
 def chunked(iterable, size):
+    """
+    Arg: lst iterable, int size
+    Out: none
+    Returns a list of data chunks of size 25
+    """
+    chunks = []
     for i in range(0, len(iterable), size):
-        yield iterable[i:i+size]
+        chunks.append(iterable[i:i+size])
+    return chunks
 
 def main():
+    """
+    Arg: none
+    Out: none
+    """
     conn, cur = setup_db("superhero.db")
     setup_tables(conn, cur)
     for batch in chunked(get_superhero_rows(1, 231), 25):

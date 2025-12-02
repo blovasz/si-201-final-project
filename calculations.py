@@ -68,6 +68,7 @@ def superhero_api_calculations(db_file, filename, filename2):
     """
     Args: str db_file, str filename
     Out: none 
+    Calculates the count of superhero for each place or birth and average BMI for supehero by gender
     """
     conn, cur = superhero.setup_db(db_file)
     cur.execute("""
@@ -95,7 +96,6 @@ def superhero_api_calculations(db_file, filename, filename2):
         with open(filename, "w") as f:
             for origin, count in places_count.items():
                 f.write(f"There are {count} superheros from {origin}\n")
-
     cur.execute("""
         SELECT genders.gender, superheros.height, superheros.weight
         FROM superheros
@@ -103,10 +103,8 @@ def superhero_api_calculations(db_file, filename, filename2):
         ON superheros.gender_id = genders.gender_id
     """)
     gender_height_weight = cur.fetchall()
-
     gender_counts = {"Male": 0, "Female": 0, "Unknown": 0}
     gender_bmi = {"Male": 0, "Female": 0, "Unknown": 0}
-
     for g, height, weight in gender_height_weight:
         if g in gender_counts and height and weight:
             try:
@@ -115,7 +113,6 @@ def superhero_api_calculations(db_file, filename, filename2):
                 gender_bmi[g] += bmi
             except Exception:
                 continue
-
     try:
         open(filename2)
     except:
