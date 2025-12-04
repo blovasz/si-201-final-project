@@ -4,6 +4,12 @@ import requests
 import os
 import re
 
+# Add these columns to the superhero table in superhero.db
+# mr_id INT
+# num_comics INT
+# first_issue INT
+
+
 def get_api_key(file_name, api_key_loc):
     """ 
     Arg: str file_name, int api_key_loc
@@ -92,7 +98,10 @@ def setup_tables(conn, cur):
         gender_id INTEGER,
         place_of_birth_id INTEGER,
         height INTEGER,
-        weight INTEGER)
+        weight INTEGER,
+        mr_id INTEGER,
+        num_comics INTEGER,
+        first_issue INTEGER)
         """
     )
     cur.execute(
