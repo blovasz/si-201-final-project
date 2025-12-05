@@ -42,26 +42,10 @@ def set_up_tables(cur, conn):
     Create two tables:
     
     """
-    #Creating origins
+    #Creating 
     cur.execute(
         """
-        CREATE TABLE IF NOT EXISTS origins (id INTEGER PRIMARY KEY,
-        origin TEXT UNIQUE)
-        """
-    )
-
-    #Creating genders
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS genders (id INTEGER PRIMARY KEY, gender TEXT UNIQUE)
-        """
-    )
-
-    #Creating characters
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY, name TEXT UNIQUE, 
-        numcomics INT, origin_id INT, gender_id INT)
+        CREATE TABLE IF NOT EXISTS numcomics (id INTEGER PRIMARY KEY, comics TEXT UNIQUE)
         """
     )
 
@@ -81,7 +65,7 @@ def get_data():
     offset = 0
 
     while len(results) < 100:
-        url = f"https://comicvine.gamespot.com/api/characters/?api_key={API_KEY}&format=json&field_list=count_of_issue_appearances,name,origin,publisher,gender&offset={offset}"
+        url = f"https://comicvine.gamespot.com/api/characters/?api_key={API_KEY}&format=json&field_list=count_of_issue_appearances,name,first_appeared_in_issue,publisher,gender&offset={offset}"
         r = requests.get(url, headers={"User-Agent": "MyApp"})
         try:
             data = json.loads(r.text)
@@ -92,82 +76,15 @@ def get_data():
         for hero in data["results"]:
             if hero["publisher"]["name"] == "Marvel":
                 name = hero.get("name", "None")
-                try:
-                    origin = hero.get("origin", {}).get("name", "None")
-                except:
-                    origin = "None"
                 numcomics = hero.get("count_of_issue_appearances", 0)
                 gender = hero.get("gender", "Other")
                 results.append((
-                    name, origin, numcomics, gender
+                    name, numcomics, gender
                 ))
         
         offset += 100
 
     return results
-
-def insert_data_for_origins(cur, conn, data):
-    """
-    Arugments: cur, conn, data
-
-    Returns: None
-    """
-    x = 0
-    y = 25
-
-    while y < len(data):
-        for i in range(x,y):
-            cur.execute(
-                """
-                INSERT OR IGNORE INTO origins (id, origin)
-                VALUES (?, ?)
-                """,
-                (i, data[i][1])
-            )
-            conn.commit()
-
-        x += 25
-        y += 25
-    pass
-
-def insert_data_for_gender(cur, conn, data):
-    """
-    Arugments: cur, conn, data
-
-    Returns: None
-    """
-    x = 0
-    y = 25
-    
-
-    while y < len(data):
-        for i in range(x,y):
-            cur.execute(
-                """
-                INSERT OR IGNORE INTO genders (id, gender)
-                VALUES (?, ?)
-                """,
-                (1, "Male")
-            )
-            cur.execute(
-                """
-                INSERT OR IGNORE INTO genders (id, gender)
-                VALUES (?, ?)
-                """,
-                (2, "Female")
-            )
-            cur.execute(
-                """
-                INSERT OR IGNORE INTO genders (id, gender)
-                VALUES (?, ?)
-                """,
-                (0, "Other")
-            )
-            conn.commit()
-
-        x += 25
-        y += 25
-    pass
 
 def insert_data_for_characters(cur, conn, data):
      """
@@ -177,39 +94,115 @@ def insert_data_for_characters(cur, conn, data):
      """
      x = 0
      y = 25
+     cur.execute(
+        """
+        SELECT name FROM names
+        """
+     )
+     lst = cur.fetchall()
+     id = len(lst) + 1
 
      while y < len(data):
         for i in range(x,y):
-            cur.execute(
-                f"""
-                SELECT id FROM origins
-                WHERE origin = '{data[i][1]}'
-                """
-            )
+            temp = (data[i][0],)
+            if temp in lst:
+                continue
 
-            o = cur.fetchone()[0]
-
-            #characters
             cur.execute(
                 """
-                INSERT OR IGNORE INTO characters (id, name, numcomics, origin_id, gender_id) VALUES (?,?,?,?,?)
+                INSERT OR IGNORE INTO names (name_id, name) VALUES (?,?)
                 """,
-                (i, data[i][0], data[i][2], o, data[i][3])
+                (id, data[i][0])
             )
 
+            gender = data[i][2]
+            if gender == 0:
+                gender = 3
+
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO superheros (name_id, gender_id)
+                VALUES (?,?)
+                """,
+                (id, gender)
+            )
             conn.commit()
+            id += 1
 
         x += 25
         y += 25
      pass
 
+def insert_data_for_numissues(cur, conn):
+    """
+    Arguments: cur, conn, data
+
+    Returns: NONE
+    """
+    cur.execute(
+        """
+        SELECT name_id, name FROM names
+        """
+    )
+    data = cur.fetchall()
+    x = 0
+    y = 0
+
+    while y < len(data):
+        y += 25
+        for i in range(x,y):
+            try:
+                url = f"https://comicvine.gamespot.com/api/characters/?api_key={API_KEY}&format=json&field_list=count_of_issue_appearances,name&filter=name:{data[i][1]}"
+            except:
+                break
+            r = requests.get(url, headers={"User-Agent": "MyApp"})
+            try:
+                temp = json.loads(r.text)
+            except:
+                print("JSON failed to load")
+                return None
+
+            issues = "NULL"
+            for hero in temp["results"]:
+                if hero["name"].lower() == data[i][1].lower():
+                    issues = str(hero["count_of_issue_appearances"]) + " comics"
+                    break
+            
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO numcomics (id, comics)
+                VALUES (?,?)
+                """,
+                (i, issues)
+            )
+            conn.commit()
+
+            cur.execute(
+                f"""
+                SELECT id, comics FROM numcomics
+                WHERE comics = "{issues}"
+                """
+            )
+
+            id = cur.fetchone()[0]
+            cur.execute(
+                f"""
+                UPDATE superheros
+                SET num_comics = {id}
+                WHERE name_id = {data[i][0]}
+                """
+            )
+            conn.commit()
+
+        x += 25
+
+
 def main():
-    cur, conn = set_up_database("comicvine.db")
+    cur, conn = set_up_database("superhero.db")
     set_up_tables(cur, conn)
     data = get_data()
-    insert_data_for_origins(cur, conn, data)
-    insert_data_for_gender(cur,conn,data)
     insert_data_for_characters(cur,conn,data)
+    insert_data_for_numissues(cur,conn)
     conn.close()
 
 if __name__ == "__main__":

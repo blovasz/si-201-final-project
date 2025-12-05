@@ -164,47 +164,6 @@ def set_up_tables(cur, conn):
         """
     )
 
-    #Creating characters
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY, name TEXT UNIQUE, gender INT)
-        """
-    )
-
-    #Creating gender
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS gender (id INTEGER PRIMARY KEY, gender TEXT UNIQUE)
-        """
-    )
-
-    conn.commit()
-
-    cur.execute(
-        """
-        INSERT OR IGNORE INTO gender (id, gender) VALUES (?,?)
-        """,
-        (0, "Other")
-    )
-
-    conn.commit()
-
-    cur.execute(
-        """
-        INSERT OR IGNORE INTO gender (id, gender) VALUES (?,?)
-        """,
-        (1, "Male")
-    )
-
-    conn.commit()
-
-    cur.execute(
-        """
-        INSERT OR IGNORE INTO gender (id, gender) VALUES (?,?)
-        """,
-        (2, "Female")
-    )
-
     conn.commit()
 
 def add_to_character_by_match(num, page_num, cur, conn):
@@ -255,23 +214,23 @@ def add_to_characters(x, y, cur, conn):
         if hero[2] == "Male":
             cur.execute(
                 """
-                INSERT OR IGNORE INTO characters (id, name, gender) VALUES (?, ?, ?)
+                INSERT OR IGNORE INTO characters (id, name, gender_id) VALUES (?, ?, ?)
                 """,
                 (hero[0], hero[1], 1)
             )
         elif hero[2] == "Female":
             cur.execute(
                 """
-                INSERT OR IGNORE INTO characters (id, name, gender) VALUES (?, ?, ?)
+                INSERT OR IGNORE INTO characters (id, name, gender_id) VALUES (?, ?, ?)
                 """,
                 (hero[0], hero[1], 2)
             )
         else:
             cur.execute(
                 """
-                INSERT OR IGNORE INTO characters (id, name, gender) VALUES (?, ?, ?)
+                INSERT OR IGNORE INTO characters (id, name, gender_id) VALUES (?, ?, ?)
                 """,
-                (hero[0], hero[1], 0)
+                (hero[0], hero[1], 03)
             )
 
     conn.commit()
@@ -313,7 +272,7 @@ def run_add_character_by_match(x, cur, conn):
     pass
 
 def main():
-    cur, conn = set_up_database("marvel_rivals.db")
+    cur, conn = set_up_database("superhero.db")
     set_up_tables(cur, conn)
     run_add_character_by_match(100, cur, conn) 
     add_to_characters(0, 25, cur, conn)
