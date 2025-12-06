@@ -126,7 +126,6 @@ def hero_list():
             gender = "Other"
             
         tup = (hero["id"], hero["name"], gender)
-        print(tup)
         hero_lst.append(tup)
 
     return hero_lst
@@ -210,28 +209,57 @@ def add_to_characters(x, y, cur, conn):
     else:
         data = lst[x:y]
 
+    cur.execute(
+        """
+        SELECT name FROM names
+        """
+    )
+
+    lst = cur.fetchall()
+    id = len(lst)+1
+
     for hero in data:
+        tup = (hero[1],)
+        if tup not in lst:
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO names (name_id, name)
+                VALUES (?,?)
+                """,
+                (id, hero[1])
+            )
+            conn.commit()
+
+        cur.execute(
+            f"""
+            SELECT name_id FROM names
+            WHERE name = '{hero[1]}'
+            """
+        )
+        name_id = cur.fetchone()[0]
+        
         if hero[2] == "Male":
             cur.execute(
                 """
-                INSERT OR IGNORE INTO characters (id, name, gender_id) VALUES (?, ?, ?)
+                INSERT OR IGNORE INTO superheros (name_id, gender_id, mr_id) VALUES (?, ?, ?)
                 """,
-                (hero[0], hero[1], 1)
+                (name_id, 1, hero[0])
             )
         elif hero[2] == "Female":
             cur.execute(
                 """
-                INSERT OR IGNORE INTO characters (id, name, gender_id) VALUES (?, ?, ?)
+                INSERT OR IGNORE INTO superheros (name_id, gender_id, mr_id) VALUES (?, ?, ?)
                 """,
-                (hero[0], hero[1], 2)
+                (name_id, 2, hero[0])
             )
         else:
             cur.execute(
                 """
-                INSERT OR IGNORE INTO characters (id, name, gender_id) VALUES (?, ?, ?)
+                INSERT OR IGNORE INTO superheros (name_id, gender_id, mr_id) VALUES (?, ?, ?)
                 """,
-                (hero[0], hero[1], 03)
+                (name_id, 3, hero[0])
             )
+        id += 1
 
     conn.commit()
     pass

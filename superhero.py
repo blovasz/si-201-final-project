@@ -93,8 +93,8 @@ def setup_tables(conn, cur):
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS superheros
-        (id INTEGER PRIMARY KEY,
-        name_id INTEGER,
+        (id INTEGER,
+        name_id INTEGER PRIMARY KEY,
         gender_id INTEGER,
         place_of_birth_id INTEGER,
         height INTEGER,
