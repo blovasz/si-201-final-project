@@ -11,12 +11,12 @@ def most_played_characters(file, filename):
     Iterating through the characters used and ordering them
     through most played in a text file for later use
     """
-    results = {"Male": 0, "Female": 0, "Other": 0}
+    results = {"Male": 0, "Female": 0, "Unknown": 0}
     cur, conn = marvel_rivals.set_up_database(file)
 
     cur.execute(
         """
-        SELECT name, id, gender FROM characters
+        SELECT mr_id, gender_id FROM superheros
         """
     )
 
@@ -24,32 +24,32 @@ def most_played_characters(file, filename):
 
     for hero in hero_lst:
         count = 0
-        name = hero[0]
-        id = hero[1]
+        id = hero[0]
 
-        for i in range(1,6):
-            #iterating over a single match at a time so I'm not getting the whole row
+        if id != None:
+            for i in range(1,6):
+                #iterating over a single match at a time so I'm not getting the whole row
+                cur.execute(
+                    f"""
+                    SELECT character_by_match.match{i} FROM character_by_match
+                    WHERE character_by_match.match{i} = {id}
+                    """
+                )
+                
+                #the length of fetchall should contain number of times character is used
+                num = len(cur.fetchall())
+                count += num
+
             cur.execute(
                 f"""
-                SELECT character_by_match.match{i} FROM character_by_match
-                WHERE character_by_match.match{i} = {id}
+                SELECT genders.gender FROM genders
+                WHERE genders.gender_id = {hero[1]}
                 """
             )
-            
-            #the length of fetchall should contain number of times character is used
-            num = len(cur.fetchall())
-            count += num
 
-        cur.execute(
-            f"""
-            SELECT gender.gender FROM gender
-            WHERE gender.id = {hero[2]}
-            """
-        )
+            gender = cur.fetchone()[0]
 
-        gender = cur.fetchone()[0]
-
-        results[gender] += count
+            results[gender] += count
         
     
     try:
@@ -133,19 +133,24 @@ def gender_by_comics(db, filename):
     Going through the superhero.db to grab how many issues different genders feature in
     """
     cur, conn = comicvine.set_up_database(db)
-    results = {"Male": 0, "Female": 0, "Other": 0}
+    results = {"Male": 0, "Female": 0, "Unknown": 0}
 
     cur.execute(
         """
-        SELECT characters.numcomics, genders.gender FROM characters
-        JOIN genders ON genders.id = characters.gender_id
+        SELECT numcomics.comics, genders.gender FROM superheros
+        JOIN numcomics ON superheros.num_comics = numcomics.id
+        JOIN genders ON superheros.gender_id = genders.gender_id
         """
     )
 
     heroes = cur.fetchall()
 
     for hero in heroes:
-        results[hero[1]] += hero[0]
+        if hero[0] != "NULL":
+            num_comics = int(hero[0].split(" ")[0])
+        else:
+            num_comics = 0
+        results[hero[1]] += num_comics
 
     try:
         open(filename)
@@ -159,9 +164,9 @@ def gender_by_comics(db, filename):
     pass
 
 def main():
-    most_played_characters("marvel_rivals.db", "most_played_characters.csv")
+    most_played_characters("superhero.db", "most_played_characters.csv")
     superhero_api_calculations("superhero.db", "num_superhero_by_origin.txt", "average_bmi_by_gender.txt")
-    gender_by_comics("comicvine.db", "gender_by_comics.csv")
+    gender_by_comics("superhero.db", "gender_by_comics.csv")
 
 if __name__ == "__main__":
     main()
