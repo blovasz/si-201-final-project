@@ -165,7 +165,7 @@ def insert_data_for_numissues(cur, conn):
             issues = "NULL"
             for hero in temp["results"]:
                 if hero["name"].lower() == data[i][1].lower():
-                    issues = str(hero["count_of_issue_appearances"]) + " comics"
+                    issues = str(hero["count_of_issue_appearances"])
                     break
             
             cur.execute(

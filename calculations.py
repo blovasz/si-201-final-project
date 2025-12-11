@@ -147,7 +147,7 @@ def gender_by_comics(db, filename):
 
     for hero in heroes:
         if hero[0] != "NULL":
-            num_comics = int(hero[0].split(" ")[0])
+            num_comics = int(hero[0])
         else:
             num_comics = 0
         results[hero[1]] += num_comics
