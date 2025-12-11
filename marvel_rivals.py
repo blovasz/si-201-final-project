@@ -50,13 +50,12 @@ def get_top_players(page_num):
     
     try:
         temp = json.loads(r.text)
-
-        for i in range(25):
-            leaderboard.append((temp["players"][i]["uid"], temp["players"][i]["name"]))
     except:
         print("JSON failed to load at top_players")
         return r.status_code
 
+    for i in range(25):
+        leaderboard.append((temp["players"][i]["uid"], temp["players"][i]["name"]))
     return leaderboard
 
 def get_player_match_history(num, page_num):
@@ -71,7 +70,6 @@ def get_player_match_history(num, page_num):
     characters_used = {}
     leaderboard = get_top_players(page_num)
     header = {"x-api-key": API_key}
-
     for user in leaderboard:
         url = f"https://marvelrivalsapi.com/api/v2/player/{user[0]}/match-history"
         r = requests.get(url, headers=header)
@@ -180,16 +178,25 @@ def add_to_character_by_match(num, page_num, cur, conn):
         return data
 
     for player in list(data.keys()):
+        
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO character_by_match (uid, player, match1, match2, match3, match4, match5)
+            VALUES (?,?,?,?,?,?,?)
+            """,
+            (player, data[player]["name"], data[player][1], data[player][2], data[player][3],
+            data[player][4], data[player][5])
+        )
         #I'm only adding the player if their match data is available. 
-        if data[player][1] != "None" and data[player][2] != "None" and data[player][3] != "None" and data[player][4] != "None" and data[player][5] != "None":
-            cur.execute(
-                """
-                INSERT OR IGNORE INTO character_by_match (uid, player, match1, match2, match3, match4, match5)
-                VALUES (?,?,?,?,?,?,?)
-                """,
-                (player, data[player]["name"], data[player][1], data[player][2], data[player][3],
-                data[player][4], data[player][5])
-            )
+        #if data[player][1] != "None" and data[player][2] != "None" and data[player][3] != "None" and data[player][4] != "None" and data[player][5] != "None":
+         #   cur.execute(
+                #"""
+                #INSERT OR IGNORE INTO character_by_match (uid, player, match1, match2, match3, match4, match5)
+                #VALUES (?,?,?,?,?,?,?)
+                #""",
+           #     (player, data[player]["name"], data[player][1], data[player][2], data[player][3],
+            #    data[player][4], data[player][5])
+            #)
 
     conn.commit()
     pass
@@ -281,25 +288,11 @@ def run_add_character_by_match(x, cur, conn):
 
     count = len(cur.fetchall())
     x += count
-    i = 1
-
-    while count < x:
-        c = add_to_character_by_match(5, i, cur, conn)
-        if c != None:
-            print(c)
-            break 
-        
-        i += 1
-
-        cur.execute(
-        """
-        SELECT uid FROM character_by_match
-        """
-        )
-        count = len(cur.fetchall())
-        if count >= 100:
-            break
-
+    if count > 0:
+        pagenum = 100/count
+    else:
+        pagenum = 5
+    c = add_to_character_by_match(5, pagenum, cur, conn)
     pass
 
 def main():
