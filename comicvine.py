@@ -92,8 +92,6 @@ def insert_data_for_characters(cur, conn, data):
 
      Returns: NONE
      """
-     x = 0
-     y = 25
      cur.execute(
         """
         SELECT name FROM names
@@ -101,36 +99,41 @@ def insert_data_for_characters(cur, conn, data):
      )
      lst = cur.fetchall()
      id = len(lst) + 1
+     cur.execute(
+         """
+        SELECT comics FROM numcomics
+        """
+     )
 
-     while y < len(data):
-        for i in range(x,y):
-            temp = (data[i][0],)
-            if temp in lst:
-                continue
+     x = len(cur.fetchall())
+     y = x + 25
 
-            cur.execute(
-                """
-                INSERT OR IGNORE INTO names (name_id, name) VALUES (?,?)
-                """,
-                (id, data[i][0])
-            )
+     for i in range(x,y):
+        temp = (data[i][0],)
+        if temp in lst:
+            continue
 
-            gender = data[i][2]
-            if gender == 0:
-                gender = 3
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO names (name_id, name) VALUES (?,?)
+            """,
+            (id, data[i][0])
+        )
 
-            cur.execute(
-                """
-                INSERT OR IGNORE INTO superheros (name_id, gender_id)
-                VALUES (?,?)
-                """,
-                (id, gender)
-            )
-            conn.commit()
-            id += 1
+        gender = data[i][2]
+        if gender == 0:
+            gender = 3
 
-        x += 25
-        y += 25
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO superheros (name_id, gender_id)
+            VALUES (?,?)
+            """,
+            (id, gender)
+        )
+        conn.commit()
+        id += 1
+
      pass
 
 def insert_data_for_numissues(cur, conn):
@@ -145,56 +148,59 @@ def insert_data_for_numissues(cur, conn):
         """
     )
     data = cur.fetchall()
-    x = 0
-    y = 0
+    cur.execute(
+        """
+        SELECT comics FROM numcomics
+        """
+    )
+    x = len(cur.fetchall())
+    y = x + 25
 
-    while y < len(data):
-        y += 25
-        for i in range(x,y):
-            try:
-                url = f"https://comicvine.gamespot.com/api/characters/?api_key={API_KEY}&format=json&field_list=count_of_issue_appearances,name&filter=name:{data[i][1]}"
-            except:
+    for i in range(x,y):
+        try:
+            url = f"https://comicvine.gamespot.com/api/characters/?api_key={API_KEY}&format=json&field_list=count_of_issue_appearances,name&filter=name:{data[i][1]}"
+        except:
+            print("broke at url")
+            break
+        r = requests.get(url, headers={"User-Agent": "MyApp"})
+        try:
+            temp = json.loads(r.text)
+        except:
+            print("JSON failed to load")
+            return None
+
+        issues = "NULL"
+        for hero in temp["results"]:
+            if hero["name"].lower() == data[i][1].lower():
+                issues = str(hero["count_of_issue_appearances"])
                 break
-            r = requests.get(url, headers={"User-Agent": "MyApp"})
-            try:
-                temp = json.loads(r.text)
-            except:
-                print("JSON failed to load")
-                return None
-
-            issues = "NULL"
-            for hero in temp["results"]:
-                if hero["name"].lower() == data[i][1].lower():
-                    issues = str(hero["count_of_issue_appearances"])
-                    break
             
-            cur.execute(
-                """
-                INSERT OR IGNORE INTO numcomics (id, comics)
-                VALUES (?,?)
-                """,
-                (i, issues)
-            )
-            conn.commit()
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO numcomics (id, comics)
+            VALUES (?,?)
+            """,
+            (i, issues)
+        )
+        conn.commit()
 
-            cur.execute(
-                f"""
-                SELECT id, comics FROM numcomics
-                WHERE comics = "{issues}"
-                """
-            )
+        cur.execute(
+            f"""
+            SELECT id, comics FROM numcomics
+            WHERE comics = "{issues}"
+            """
+        )
 
-            id = cur.fetchone()[0]
-            cur.execute(
-                f"""
-                UPDATE superheros
-                SET num_comics = {id}
-                WHERE name_id = {data[i][0]}
-                """
-            )
-            conn.commit()
-
-        x += 25
+        id = cur.fetchone()[0]
+        cur.execute(
+            f"""
+            UPDATE superheros
+            SET num_comics = {id}
+            WHERE name_id = {data[i][0]}
+            """
+        )
+        conn.commit()
+pass
 
 
 def main():
