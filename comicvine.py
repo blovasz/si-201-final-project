@@ -64,7 +64,7 @@ def get_data():
     results = []
     offset = 0
 
-    while len(results) < 100:
+    while len(results) < 150:
         url = f"https://comicvine.gamespot.com/api/characters/?api_key={API_KEY}&format=json&field_list=count_of_issue_appearances,name,first_appeared_in_issue,publisher,gender&offset={offset}"
         r = requests.get(url, headers={"User-Agent": "MyApp"})
         try:
@@ -104,11 +104,10 @@ def insert_data_for_characters(cur, conn, data):
         SELECT comics FROM numcomics
         """
      )
-
      x = len(cur.fetchall())
      y = x + 25
 
-     for i in range(x,y):
+     for i in range(x, y):
         temp = (data[i][0],)
         if temp in lst:
             continue
@@ -148,19 +147,25 @@ def insert_data_for_numissues(cur, conn):
         """
     )
     data = cur.fetchall()
+    
     cur.execute(
         """
-        SELECT comics FROM numcomics
+        SELECT name_id, num_comics FROM superheros
         """
     )
-    x = len(cur.fetchall())
-    y = x + 25
+    temp = cur.fetchall()
+    for t in temp:
+        print(t)
+        if t[1] == None:
+            x = t[0] - 1
+            y = x + 25
+            break
 
     for i in range(x,y):
         try:
             url = f"https://comicvine.gamespot.com/api/characters/?api_key={API_KEY}&format=json&field_list=count_of_issue_appearances,name&filter=name:{data[i][1]}"
         except:
-            print("broke at url")
+            print("Finished searching for data!")
             break
         r = requests.get(url, headers={"User-Agent": "MyApp"})
         try:
@@ -206,8 +211,15 @@ pass
 def main():
     cur, conn = set_up_database("superhero.db")
     set_up_tables(cur, conn)
-    data = get_data()
-    insert_data_for_characters(cur,conn,data)
+    cur.execute(
+        """
+        SELECT id FROM superheros
+        """
+    )
+    length = len(cur.fetchall())
+    if length < 150:
+        data = get_data()
+        insert_data_for_characters(cur,conn,data)
     insert_data_for_numissues(cur,conn)
     conn.close()
 

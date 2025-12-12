@@ -221,7 +221,6 @@ def add_to_characters(x, y, cur, conn):
     temp = hero_list()
 
     for hero in temp:
-        print(hero)
         t = (hero[1],)
         if t in lst:
             y += 1
