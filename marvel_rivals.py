@@ -210,12 +210,6 @@ def add_to_characters(x, y, cur, conn):
     Using x and y to limit how many characters we add at a time,
     we are adding data from hero_list() to the characters table
     """
-    lst = hero_list()
-    if y > len(lst):
-        data = lst[x:len(lst)+1]
-    else:
-        data = lst[x:y]
-
     cur.execute(
         """
         SELECT name FROM names
@@ -224,6 +218,18 @@ def add_to_characters(x, y, cur, conn):
 
     lst = cur.fetchall()
     id = len(lst)+1
+    temp = hero_list()
+
+    for hero in temp:
+        print(hero)
+        t = (hero[1],)
+        if t in lst:
+            y += 1
+            x += 1
+    if y > len(temp):
+        data = temp[x:len(temp)+1]
+    else:
+        data = temp[x:y]
 
     for hero in data:
         tup = (hero[1],)
@@ -298,7 +304,8 @@ def run_add_character_by_match(x, cur, conn):
 def main():
     cur, conn = set_up_database("superhero.db")
     set_up_tables(cur, conn)
-    run_add_character_by_match(25, cur, conn) 
+    run_add_character_by_match(25, cur, conn)
+    add_to_characters(0, 25, cur, conn) 
     conn.close()
 
 if __name__ == "__main__":
