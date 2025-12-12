@@ -33,7 +33,7 @@ def make_fig(filename, title, y, colors):
 def main():
     colors = ["cornflowerblue", "hotpink", "orange"]
     make_fig("gender_by_comics.csv", "Heroes by Gender in Marvel Comics", "Number of Issues", colors)
-    make_fig("most_played_characters.csv", "Heroes by Gender in Marvel Rival Matches", 
+    make_fig("most_played_characters.csv", "Heroes Being Played by Gender in Marvel Rival Matches", 
              "Number of Matches Played In", colors)
 
 
