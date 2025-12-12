@@ -159,6 +159,9 @@ def insert_data_for_numissues(cur, conn):
             x = t[0] - 1
             y = x + 20 #adding 20 at a time in case there are double named superheros so we're not adding 25+
             break
+        else:
+            print("Finished searching for data!")
+            pass
 
     for i in range(x,y):
         try:
